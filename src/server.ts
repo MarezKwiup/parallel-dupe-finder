@@ -1,8 +1,11 @@
 import express, { Request, Response } from "express";
 import os from "node:os";
-import { WorkerPool } from "./worker-pool";
+import { WorkerPool } from "./workers/worker-pool";
 import { scanDirectory } from "./scanner/directory-scanner";
-import { getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
+import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
+import { HashService } from "./hashing/hash-service";
+import fs from 'node:fs/promises';
+import { group } from "node:console";
 
 const app = express();
 const PORT = 3000;
@@ -53,6 +56,24 @@ app.get('/expensive-compute/:iterations',
     }
 )
 
+const hashService = new HashService(WORKER_COUNT);
+
+app.post('/hash-files', async(req: Request, res: Response) => {
+    try {
+        const files: string[] = req.body.files;
+        const results = await hashService.hashFiles(files);
+
+        res.json({
+            message: 'Hash completed',
+            hashes: results
+        })
+    } catch (err) {
+        res.status(500).json({
+            message: err instanceof Error ? err.message : 'Hashing failed'
+        })
+    }
+})
+
 app.post('/scan-files', async(req: Request, res: Response) => {
     try {
         const { directory }: { directory: string } = req.body;
@@ -64,18 +85,52 @@ app.post('/scan-files', async(req: Request, res: Response) => {
 
         const candidateFiles = getCandidateFiles(groups);
 
+        const candidateHashes = await hashService.hashFiles(candidateFiles);
+
+        const duplicateHashes = findDuplicateGroups(candidateHashes);
+
+        const sizes = await Promise.all(
+            duplicateHashes.map(group => fs.stat(group.files[0]).then(s => s.size))
+        )
+        const { 
+            duplicateFiles, 
+            redundantFiles,
+            reclaimableBytes 
+        } = duplicateHashes.reduce((acc, group, i) => {
+            const extra = group.files.length - 1;
+            return {
+                duplicateFiles : acc.duplicateFiles + group.files.length,
+                redundantFiles: acc.redundantFiles + extra,
+                reclaimableBytes: acc.reclaimableBytes + sizes[i] * extra
+            }
+        }, {
+            duplicateFiles : 0,
+            redundantFiles: 0,
+            reclaimableBytes: 0
+        })
+
         res.json({
             message: 'Scan Completed',
+            summary: {
+                totalFilesScanned: files.length,
+                candidateFiles: candidateFiles.length,
+                duplicateGroups: duplicateHashes.length,
+                duplicateFiles,
+                redundantFiles,
+                reclaimableBytes
+            },
             files,
             groups: groupObj,
-            candidateFiles
+            candidateFiles,
+            candidateHashes,
+            duplicateHashes
         })
     } catch (err) {
         res.status(500).json({
             message: err instanceof Error ? err.message : 'Scan Failed'
         })
     }
-})
+});
 
 const server = app.listen(PORT, () => {
     console.log(`Server listening at PORT: ${PORT}`)
