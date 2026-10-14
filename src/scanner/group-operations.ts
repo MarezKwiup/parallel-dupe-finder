@@ -28,7 +28,7 @@ export function getCandidateFiles(
     return candidates;
 }
 
-type DuplicateGroup = {
+export type DuplicateGroup = {
     hash: string;
     files: string[];
 }

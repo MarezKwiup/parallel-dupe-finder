@@ -1,11 +1,8 @@
 import express, { Request, Response } from "express";
 import os from "node:os";
 import { WorkerPool } from "./workers/worker-pool";
-import { scanDirectory } from "./scanner/directory-scanner";
-import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
 import { HashService } from "./hashing/hash-service";
-import fs from 'node:fs/promises';
-import { group } from "node:console";
+import { DuplicateScanner, ScanResult } from "./duplicate-scanner";
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +19,7 @@ type ComputeTask = {
 type ComputeResult = number;
 
 const workerPool = new WorkerPool<ComputeTask, ComputeResult>(WORKER_COUNT, './src/worker.js');
+const duplicateScanner = new DuplicateScanner(WORKER_COUNT);
 
 app.use(express.json());
 
@@ -76,59 +74,24 @@ app.post('/hash-files', async(req: Request, res: Response) => {
 
 app.post('/scan-files', async(req: Request, res: Response) => {
     try {
-        const { directory }: { directory: string } = req.body;
+        const { directory } = req.body;
 
-        const files = await scanDirectory(directory);
+        if (typeof directory !== 'string' || !directory.trim()) {
+            return res.status(400).json({
+                message: 'A valid directory path is required'
+            });
+        }
 
-        const groups = await groupFilesBySize(files);
-        const groupObj = Object.fromEntries(groups);
-
-        const candidateFiles = getCandidateFiles(groups);
-
-        const candidateHashes = await hashService.hashFiles(candidateFiles);
-
-        const duplicateHashes = findDuplicateGroups(candidateHashes);
-
-        const sizes = await Promise.all(
-            duplicateHashes.map(group => fs.stat(group.files[0]).then(s => s.size))
-        )
-        const { 
-            duplicateFiles, 
-            redundantFiles,
-            reclaimableBytes 
-        } = duplicateHashes.reduce((acc, group, i) => {
-            const extra = group.files.length - 1;
-            return {
-                duplicateFiles : acc.duplicateFiles + group.files.length,
-                redundantFiles: acc.redundantFiles + extra,
-                reclaimableBytes: acc.reclaimableBytes + sizes[i] * extra
-            }
-        }, {
-            duplicateFiles : 0,
-            redundantFiles: 0,
-            reclaimableBytes: 0
-        })
+        const scanResult: ScanResult = await duplicateScanner.scan(directory);
 
         res.json({
-            message: 'Scan Completed',
-            summary: {
-                totalFilesScanned: files.length,
-                candidateFiles: candidateFiles.length,
-                duplicateGroups: duplicateHashes.length,
-                duplicateFiles,
-                redundantFiles,
-                reclaimableBytes
-            },
-            files,
-            groups: groupObj,
-            candidateFiles,
-            candidateHashes,
-            duplicateHashes
-        })
+            message: 'Scan completed',
+            ...scanResult
+        });
     } catch (err) {
         res.status(500).json({
             message: err instanceof Error ? err.message : 'Scan Failed'
-        })
+        });
     }
 });
 
@@ -140,11 +103,19 @@ async function shutdown() {
     console.log('Shutting down.....');
 
     server.close(async () => {
-        await workerPool.shutdown();
+        try {
+            await Promise.all([
+                workerPool.shutdown(),
+                hashService.shutdown(),
+                duplicateScanner.shutdown()
+            ]);
 
-        console.log('Workers terminated');
-
-        process.exit(0);
+            console.log('All workers terminated');
+            process.exit(0);
+        } catch (err) {
+            console.error('Error during shutdown: ', err);
+            process.exit(1);
+        }
     });
 }
 
