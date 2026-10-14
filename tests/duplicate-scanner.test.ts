@@ -55,5 +55,48 @@ describe("DuplicateScanner integration tests", () => {
                 force: true
             })
         }
+    });
+
+    it("should handle an empty directory", async () => {
+        const tempDir = await mkdtemp(
+            path.join(os.tmpdir(), "dupe-finder-")
+        );
+        const scanner = new DuplicateScanner(2);
+
+        try {
+            const result = await scanner.scan(tempDir);
+
+            expect(result.summary.totalFilesScanned).toBe(0);
+            expect(result.summary.candidateFiles).toBe(0);
+            expect(result.summary.duplicateGroups).toBe(0);
+            expect(result.summary.reclaimableBytes).toBe(0);
+            expect(result.duplicates).toEqual([]);
+        } finally {
+            await scanner.shutdown();
+            await rm(tempDir, { recursive: true, force: true });
+        }
+    });
+
+    it("should not report files with identical sizes but different content as duplicates", async () => {
+        const tempDir = await mkdtemp(
+            path.join(os.tmpdir(), "dupe-finder-")
+        );
+        const scanner = new DuplicateScanner(2);
+
+        try {
+            await writeFile(path.join(tempDir, "a.txt"), "hello");
+            await writeFile(path.join(tempDir, "b.txt"), "world");
+
+            const result = await scanner.scan(tempDir);
+
+            expect(result.summary.totalFilesScanned).toBe(2);
+            expect(result.summary.candidateFiles).toBe(2);
+            expect(result.summary.duplicateGroups).toBe(0);
+            expect(result.summary.reclaimableBytes).toBe(0);
+            expect(result.duplicates).toEqual([]);
+        } finally {
+            await scanner.shutdown();
+            await rm(tempDir, { recursive: true, force: true });
+        }
     })
 })
