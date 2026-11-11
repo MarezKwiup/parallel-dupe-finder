@@ -43,5 +43,37 @@ describe("WorkerPool", () => {
         await expect(pool.runTask(10))
             .rejects.toThrow("Worker pool is shutting down")
     })
+
+    it("should replace a crashed worker and process queued tasks", async () => {
+        const crashWorkerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/crash-worker.js"
+        );
+
+        const pool = new WorkerPool<string, string>(
+            1,
+            crashWorkerPath
+        );
+
+        try {
+            const failedTask = pool.runTask("crash");
+
+            const queuedTask = pool.runTask("hello");
+
+            const [failedResult, queuedResult] = await Promise.allSettled([
+                failedTask,
+                queuedTask
+            ]);
+
+            expect(failedResult.status).toBe("rejected");
+
+            expect(queuedResult).toEqual({
+                status: "fulfilled",
+                value: "processed: hello"
+            });
+        } finally {
+            await pool.shutdown();
+        }
+    })
 })
 
