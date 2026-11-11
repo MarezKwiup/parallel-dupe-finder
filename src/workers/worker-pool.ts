@@ -53,13 +53,11 @@ export class WorkerPool<TTask, TResult> {
         })
 
         workerInfo.worker.on('exit', (code) => {
-            if (code !== 0) {
-                this.handleWorkerFailure(
-                    workerInfo,
-                    new Error(`Worker exited with code : ${code}`)
-                )
-            }
-        })
+            this.handleWorkerFailure(
+                workerInfo,
+                new Error(`Worker exited unexpectedly with code: ${code}`)
+            );
+        });
 
         return workerInfo;
     }

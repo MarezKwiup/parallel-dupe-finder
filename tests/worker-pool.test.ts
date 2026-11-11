@@ -75,5 +75,83 @@ describe("WorkerPool", () => {
             await pool.shutdown();
         }
     })
-})
+
+    it("should reject pending and queued tasks during shutdown", async () => {
+        const slowWorkerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/slow-worker.js"
+        );
+
+        const pool = new WorkerPool<string, string>(1, slowWorkerPath);
+
+        const firstTask = pool.runTask("first");
+        const secondTask = pool.runTask("second");
+
+        const outcomesPromise = Promise.allSettled([
+            firstTask,
+            secondTask
+        ]);
+
+        await pool.shutdown();
+
+        const outcomes = await outcomesPromise;
+
+        expect(outcomes).toHaveLength(2);
+
+        for (const outcome of outcomes) {
+            expect(outcome.status).toBe("rejected");
+
+            if (outcome.status === 'rejected') {
+                expect(outcome.reason.message).toBe(
+                    "Worker pool is shutting down"
+                );
+            }
+        }
+
+        await expect(pool.runTask("third"))
+            .rejects.toThrow("Worker pool is shutting down");
+    })
+
+    it("should recover when a worker exits unexpectedly with code 0", async () => {
+        const exitWorkerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/exit-zero-worker.js"
+        );
+
+        const pool = new WorkerPool<string, string>(1, exitWorkerPath);
+
+        try {
+            const failedTask = pool.runTask("exit");
+            const queuedTask = pool.runTask("hello");
+
+            const outcomesPromise = Promise.allSettled([
+                failedTask,
+                queuedTask
+            ]);
+
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+            const outcomes = await Promise.race([
+                outcomesPromise,
+                new Promise<never>((_, reject) => {
+                    timeoutId = setTimeout(
+                        () => reject(new Error("Worker recovery timed out")),
+                        1500
+                    );
+                })
+            ]).finally(() => {
+                if (timeoutId) clearTimeout(timeoutId);
+            });
+
+            expect(outcomes[0].status).toBe("rejected");
+
+            expect(outcomes[1]).toEqual({
+                status: "fulfilled",
+                value: "processed: hello"
+            });
+        } finally {
+            await pool.shutdown();
+        }
+    })
+});
 
