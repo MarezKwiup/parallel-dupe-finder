@@ -153,5 +153,40 @@ describe("WorkerPool", () => {
             await pool.shutdown();
         }
     })
+
+    it("should reject task-level error, not kill the worker", async () => {
+        const failWorkerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/fail-worker.js"
+        );
+
+        const pool = new WorkerPool<string, string>(1, failWorkerPath);
+
+        try {
+            const failedTask = pool.runTask("fail");
+            const queuedTask = pool.runTask("queued");
+
+            const outcomesPromise = Promise.allSettled([
+                failedTask,
+                queuedTask
+            ]);
+
+            const outcomes = await outcomesPromise;
+
+            expect(outcomes[0]).toMatchObject({
+                status: "rejected",
+                reason: {
+                    message: "ENOENT: no such file or directory: fail",
+                    name: "ENOENT"
+                }
+            });
+            expect(outcomes[1]).toEqual({
+                status: "fulfilled",
+                value: "processed: queued"
+            });
+        } finally {
+            await pool.shutdown();
+        }
+    })
 });
 
