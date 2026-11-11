@@ -21,7 +21,14 @@ parentPort.on('message', async ({ taskId, data }) => {
             }
         })
     } catch (err) {
-        console.log('Caught the error here!');
-        throw err;
+        parentPort.postMessage({
+            taskId,
+            error: {
+                message: err instanceof Error
+                    ? err.message
+                    : 'Worker failed while hashing',
+                name: err instanceof Error ? err.name : 'Error'
+            }
+        })
     }
 })

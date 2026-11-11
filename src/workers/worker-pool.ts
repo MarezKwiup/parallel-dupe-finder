@@ -44,8 +44,8 @@ export class WorkerPool<TTask, TResult> {
             failed: false
         }
 
-        workerInfo.worker.on('message', ({ taskId, result }) => {
-            this.handleWorkerMessage(workerInfo, taskId, result);
+        workerInfo.worker.on('message', ({ taskId, result, error }) => {
+            this.handleWorkerMessage(workerInfo, taskId, result, error);
         })
 
         workerInfo.worker.on('error', (error: Error) => {
@@ -65,13 +65,20 @@ export class WorkerPool<TTask, TResult> {
     private handleWorkerMessage(
         workerInfo: WorkerInfo,
         taskId: number,
-        result: TResult
+        result?: TResult,
+        error?: { message: string, name: string },
     ) {
         const task = this.pendingTasks.get(taskId);
 
         if (!task) return;
 
-        task.resolve(result);
+        if (error !== undefined) {
+            const taskError = new Error(error.message);
+            taskError.name = error.name;
+            task.reject(taskError);
+        } else {
+            task.resolve(result as TResult);
+        }
 
         this.pendingTasks.delete(taskId);
 
