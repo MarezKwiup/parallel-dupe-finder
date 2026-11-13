@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { WorkerPool } from "../src/workers/worker-pool";
 import path from "node:path";
 import process from "node:process";
@@ -42,7 +42,7 @@ describe("WorkerPool", () => {
         await pool.shutdown();
 
         await expect(pool.runTask(10))
-            .rejects.toThrow("Worker pool is shutting down")
+            .rejects.toThrow("Worker pool is shutting down...")
     })
 
     it("should replace a crashed worker and process queued tasks", async () => {
@@ -104,13 +104,13 @@ describe("WorkerPool", () => {
 
             if (outcome.status === 'rejected') {
                 expect(outcome.reason.message).toBe(
-                    "Worker pool is shutting down"
+                    "Worker pool is shutting down..."
                 );
             }
         }
 
         await expect(pool.runTask("third"))
-            .rejects.toThrow("Worker pool is shutting down");
+            .rejects.toThrow("Worker pool is shutting down...");
     })
 
     it("should recover when a worker exits unexpectedly with code 0", async () => {
@@ -214,5 +214,45 @@ describe("WorkerPool", () => {
             await pool!.shutdown();
         }
     });
+
+    it("should stop respawning when workers crash on startup", async () => {
+        const brokenWorkerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/broken-worker.js"
+        );
+
+        const pool = new WorkerPool<string, string>(1, brokenWorkerPath);
+
+        try {
+            const firstTask = pool.runTask("first");
+            const secondTask = pool.runTask("second");
+            const thirdTask = pool.runTask("third");
+
+            const outcomesPromise = Promise.allSettled([ firstTask, secondTask, thirdTask ]);
+
+            let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+            const outcomes = await Promise.race([
+                outcomesPromise,
+                new Promise<never>((_, reject) => {
+                    timeoutId = setTimeout(
+                        () => reject(new Error("Worker recovery timed out")),
+                        1500
+                    );
+                })
+            ]).finally(() => {
+                if (timeoutId) clearTimeout(timeoutId);
+            });
+
+            expect(outcomes[0].status).toBe("rejected");
+            expect(outcomes[1].status).toBe("rejected");
+
+            await vi.waitFor(() => expect(pool.size).toBe(0), { timeout: 1500 });
+
+            await expect(pool.runTask("fourth")).rejects.toThrow();
+        } finally {
+            await pool.shutdown();
+        }
+    })
 });
 
