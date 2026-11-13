@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { WorkerPool } from "../src/workers/worker-pool";
 import path from "node:path";
+import process from "node:process";
 
 const workerPath = path.resolve(
     process.cwd(),
@@ -188,5 +189,30 @@ describe("WorkerPool", () => {
             await pool.shutdown();
         }
     })
+
+    it("should only accept positive integer worker count", async () => {
+        const workerPath = path.resolve(
+            process.cwd(),
+            "tests/fixtures/echo-worker.js"
+        );
+        
+        expect(() => new WorkerPool<string, string>(0, workerPath)).toThrow();
+        expect(() => new WorkerPool<string, string>(-1, workerPath)).toThrow();
+        expect(() => new WorkerPool<string, string>(1.5, workerPath)).toThrow();
+        expect(() => new WorkerPool<string, string>(NaN, workerPath)).toThrow();
+
+        let pool: WorkerPool<number, number> | undefined;
+        try {
+            expect(() => {
+                pool = new WorkerPool<number, number>(1, workerPath);
+            }).not.toThrow();
+
+            expect(pool).toBeInstanceOf(WorkerPool);
+
+            expect(await pool!.runTask(21)).toBe(42);
+        } finally {
+            await pool!.shutdown();
+        }
+    });
 });
 

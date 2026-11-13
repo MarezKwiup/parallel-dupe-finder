@@ -32,6 +32,10 @@ export class WorkerPool<TTask, TResult> {
         private readonly workerCount: number,
         private readonly workerPath: string
     ) {
+        if (!(Number.isInteger(workerCount) && workerCount > 0)) {
+            throw new RangeError("The number of workers must be a positive integer");
+        }
+        
         for (let i = 0; i < workerCount; i++) {
             this.workers.push(this.createWorker());
         }
