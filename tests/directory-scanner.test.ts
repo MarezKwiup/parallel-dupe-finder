@@ -23,7 +23,7 @@ describe("scanDirectory", () => {
 
                 const { allFiles, skipped } = await scanDirectory(tempDir);
 
-                expect(allFiles).toEqual([[path.join(tempDir, "visible.txt")]]);
+                expect(allFiles).toEqual([path.join(tempDir, "visible.txt")]);
 
                 expect(skipped).toHaveLength(1);
                 expect(skipped[0]).toMatchObject({

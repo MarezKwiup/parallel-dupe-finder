@@ -40,7 +40,8 @@ describe("DuplicateScanner integration tests", () => {
                 duplicateGroups: 2,
                 duplicateFiles: 5,
                 redundantFiles: 3,
-                reclaimableBytes: 3 * Buffer.byteLength(contentA)
+                reclaimableBytes: 3 * Buffer.byteLength(contentA),
+                skippedPaths: 0
             });
 
             expect(

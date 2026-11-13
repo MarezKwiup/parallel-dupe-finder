@@ -27,10 +27,10 @@ export async function scanDirectory(directory: string): Promise<{ allFiles: stri
                 message: e.message,
                 code: e.code
             })
-
+            continue;
         }
 
-        for (const entry of entries!) {
+        for (const entry of entries) {
             const fullPath = path.join(currentDirectory, entry.name);
 
             if (entry.isDirectory()) {
