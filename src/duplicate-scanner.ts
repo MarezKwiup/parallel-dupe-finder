@@ -10,11 +10,20 @@ export type ScanSummary = {
     duplicateFiles: number;
     redundantFiles: number;
     reclaimableBytes: number;
+    skippedPaths: number;
+}
+
+export type SkippedEntry = {
+    path: string;
+    stage: "scan" | "stat" | "hash";
+    code?: string;
+    message: string;
 }
 
 export type ScanResult = {
     summary: ScanSummary;
     duplicates: DuplicateGroup[];
+    skipped: SkippedEntry[];
 }
 
 export class DuplicateScanner {
