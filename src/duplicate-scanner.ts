@@ -43,7 +43,7 @@ export class DuplicateScanner {
             duplicateFiles,
             redundantFiles,
             reclaimableBytes
-        } = duplicateHashes.reduce((acc, group, i) => {
+        } = duplicateHashes.reduce((acc, group) => {
             const extra = group.files.length - 1;
             return {
                 duplicateFiles: acc.duplicateFiles + group.files.length,

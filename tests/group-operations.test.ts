@@ -5,10 +5,9 @@ import {
   groupFilesBySize
 } from "../src/scanner/group-operations";
 import { type HashResult } from "../src/hashing/hash-service";
-import { mkdtemp } from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { writeFile } from "node:fs";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
 
 describe("getCandidateFiles", () => {
     it("should return files from groups containing multiple files", () => {
@@ -101,24 +100,33 @@ describe("findDuplicateGroups", () => {
     })
 
     it("should handle deleted files during a scan", async () => {
-        const tempDir = await mkdtemp(
-            path.join(os.tempDir(), "dupe-finder-")
+         const tempDir = await mkdtemp(
+            path.join(os.tmpdir(), "dupe-finder-")
         );
+        try {
+            const fileA = path.join(tempDir, "a.txt");
+            const fileB = path.join(tempDir, "b.txt");
+            
+            await writeFile(fileA, "Hello world");
+            await writeFile(fileB, "Hello world");
 
-        const fileA = path.join(tempDir, "a.txt");
-        const fileB = path.join(tempDir, "b.txt");
-        
-        await writeFile(fileA, "Hello world");
-        await writeFile(fileB, "Hello world");
+            const { groups, skipped, sizes } = await groupFilesBySize([fileA, fileB, path.join(tempDir, "deleted.txt")]);
 
-        const { groups, skipped, sizes } = await groupFilesBySize([fileA, fileB, path.join(tempDir, "deleted.txt")]);
-
-        expect(groups.size).toBe(1);
-        expect(skipped.length).toBe(1);
-        expect(skipped[0]).toMatchObject({
-            path: path.join(tempDir, "deleted.txt"),
-            stage: "stage",
-            code: "ENOENT"
-        });
+            expect(groups.size).toBe(1);
+            expect(groups.get(11)).toEqual([fileA, fileB]);
+            expect(sizes.get(fileA)).toBe(11);
+            expect(sizes.has(path.join(tempDir, "deleted.txt"))).toBe(false);
+            expect(skipped.length).toBe(1);
+            expect(skipped[0]).toMatchObject({
+                path: path.join(tempDir, "deleted.txt"),
+                stage: "stat",
+                code: "ENOENT"
+            });
+        } finally {
+            await rm(tempDir, {
+                    recursive: true,
+                    force: true
+            });
+        }
     })
 })
