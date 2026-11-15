@@ -109,9 +109,9 @@ describe("WorkerPool", () => {
             }
         }
 
-        const resp = await pool.runTask("third");
-        expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
-        expect(resp).rejects.toThrow("Worker pool is shutting down");
+        const resp = pool.runTask("third");
+        await expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
+        await expect(resp).rejects.toThrow("Worker pool is shutting down");
     })
 
     it("should recover when a worker exits unexpectedly with code 0", async () => {
@@ -250,9 +250,9 @@ describe("WorkerPool", () => {
 
             await vi.waitFor(() => expect(pool.size).toBe(0), { timeout: 1500 });
 
-            const resp = await pool.runTask("fourth");
-            expect(resp).rejects.toThrow();
-            expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
+            const resp = pool.runTask("fourth");
+            await expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
+            await expect(resp).rejects.toThrow("Worker pool failed");
         } finally {
             await pool.shutdown();
         }

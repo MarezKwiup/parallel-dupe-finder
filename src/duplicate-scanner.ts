@@ -1,29 +1,7 @@
 import { HashService } from "./hashing/hash-service";
 import { scanDirectory } from "./scanner/directory-scanner";
-import { DuplicateGroup, findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
-
-export type ScanSummary = {
-    totalFilesScanned: number;
-    candidateFiles: number;
-    duplicateGroups: number;
-    duplicateFiles: number;
-    redundantFiles: number;
-    reclaimableBytes: number;
-    skippedPaths: number;
-}
-
-export type SkippedEntry = {
-    path: string;
-    stage: "scan" | "stat" | "hash";
-    code?: string;
-    message: string;
-}
-
-export type ScanResult = {
-    summary: ScanSummary;
-    duplicates: DuplicateGroup[];
-    skipped: SkippedEntry[];
-}
+import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
+import type { DuplicateGroup, ScanResult  } from "./types";
 
 export class DuplicateScanner {
     private hashService : HashService;

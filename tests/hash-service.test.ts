@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import path, { join } from "node:path";
+import { describe, it, expect } from "vitest";
+import path from "node:path";
 import os from "node:os";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { HashService } from '../src/hashing/hash-service'; 
@@ -13,14 +13,14 @@ describe("HashService", () => {
 
         const realFile = path.join(tempDir, "real.txt");
         await writeFile(realFile, "Hello world");
+        const hashService = new HashService(1);
         try {
-            const hashService = new HashService(1);
             const { results, skipped } = await hashService.hashFiles([realFile, path.join(tempDir, "missing.txt")]);
 
             expect(results).toHaveLength(1);
             expect(results[0]).toMatchObject({
                 filePath: realFile
-            }),
+            });
             expect(skipped).toHaveLength(1);
             expect(skipped[0]).toMatchObject({
                 path: path.join(tempDir, "missing.txt"),
@@ -28,6 +28,7 @@ describe("HashService", () => {
                 code: "ENOENT"
             });
         } finally {
+            await hashService.shutdown();
             await rm(tempDir, {
                 recursive: true,
                 force: true
@@ -45,7 +46,7 @@ describe("HashService", () => {
         try {
             const hashService = new HashService(1);
             
-            hashService.shutdown();
+            await hashService.shutdown();
 
             await (expect(hashService.hashFiles([realFile]))).rejects.toBeInstanceOf(WorkerPoolError);
         } finally {

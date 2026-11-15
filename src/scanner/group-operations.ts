@@ -1,6 +1,6 @@
 import { stat } from "node:fs/promises";
 import { HashResult } from "../hashing/hash-service";
-import { SkippedEntry } from "../duplicate-scanner";
+import type { SkippedEntry, DuplicateGroup } from "../types";
 
 export async function groupFilesBySize(
     files: string[]
@@ -43,11 +43,6 @@ export function getCandidateFiles(
         }
     }
     return candidates;
-}
-
-export type DuplicateGroup = {
-    hash: string;
-    files: string[];
 }
 
 export function findDuplicateGroups(

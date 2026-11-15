@@ -1,5 +1,9 @@
 import { Worker } from "node:worker_threads";
 
+export class WorkerPoolError extends Error {
+  override name = "WorkerPoolError";
+}
+
 type WorkerInfo = {
   worker: Worker;
   busy: boolean;
@@ -227,8 +231,4 @@ export class WorkerPool<TTask, TResult> {
 
     this.workers = [];
   }
-}
-
-export class WorkerPoolError extends Error {
-  override name = "WorkerPoolError";
 }
