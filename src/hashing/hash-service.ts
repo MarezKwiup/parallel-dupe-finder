@@ -1,4 +1,5 @@
-import { WorkerPool } from "../workers/worker-pool";
+import { SkippedEntry } from "../duplicate-scanner";
+import { WorkerPool, WorkerPoolError } from "../workers/worker-pool";
 
 export type HashTask = {
     filePath: string;
@@ -15,12 +16,28 @@ export class HashService {
         this.workerPool = new WorkerPool<HashTask, HashResult>(workerCount, './src/workers/hash-worker.js');
     }
 
-    async hashFiles(files: string[]): Promise<HashResult[]> {
+    async hashFiles(files: string[]): Promise<{ results: HashResult[]; skipped: SkippedEntry[]}> {
+        const results: HashResult[] = [];
+        const skipped: SkippedEntry[] = []
         const tasks = files.map((filePath) => 
             this.workerPool.runTask({ filePath })
         );
-
-        return Promise.all(tasks);
+        const resp = Promise.allSettled(tasks);
+        for (const [index, result] of (await resp).entries()) {
+            if (result.status === 'fulfilled') {
+                results.push(result.value);
+            } else {
+                if (result.reason instanceof WorkerPoolError) throw result.reason;
+                const e = result.reason as NodeJS.ErrnoException
+                skipped.push({
+                    path: files[index],
+                    stage: 'hash',
+                    message: e.message,
+                    code: e.code
+                })
+            }
+        }
+        return { results, skipped };
     }
 
     async shutdown(): Promise<void> {

@@ -72,7 +72,7 @@ export class WorkerPool<TTask, TResult> {
     workerInfo: WorkerInfo,
     taskId: number,
     result?: TResult,
-    error?: { message: string; name: string },
+    error?: { message: string; name: string, code?: string },
   ) {
     this.consecutiveFailures = 0;
     const task = this.pendingTasks.get(taskId);
@@ -82,6 +82,7 @@ export class WorkerPool<TTask, TResult> {
     if (error !== undefined) {
       const taskError = new Error(error.message);
       taskError.name = error.name;
+      (taskError as NodeJS.ErrnoException).code = error.code;
       task.reject(taskError);
     } else {
       task.resolve(result as TResult);
@@ -122,7 +123,7 @@ export class WorkerPool<TTask, TResult> {
     this.consecutiveFailures++;
 
     if (this.consecutiveFailures > WorkerPool.MAX_CONSECUTIVE_FAILURES) {
-      this.poolFailureError = new Error(
+      this.poolFailureError = new WorkerPoolError(
         "Worker pool failed: workers keep crashing on startup",
         { cause: error },
       );
@@ -177,7 +178,7 @@ export class WorkerPool<TTask, TResult> {
 
   runTask(data: TTask): Promise<TResult> {
     if (this.shuttingDown) {
-      return Promise.reject(new Error("Worker pool is shutting down..."));
+      return Promise.reject(new WorkerPoolError("Worker pool is shutting down..."));
     }
 
     if (this.poolFailureError !== null) {
@@ -209,7 +210,7 @@ export class WorkerPool<TTask, TResult> {
   async shutdown() {
     this.shuttingDown = true;
 
-    const error = new Error("Worker pool is shutting down...");
+    const error = new WorkerPoolError("Worker pool is shutting down...");
 
     while (this.taskQueue.length > 0) {
       const task = this.taskQueue.shift();
@@ -226,4 +227,8 @@ export class WorkerPool<TTask, TResult> {
 
     this.workers = [];
   }
+}
+
+export class WorkerPoolError extends Error {
+  override name = "WorkerPoolError";
 }

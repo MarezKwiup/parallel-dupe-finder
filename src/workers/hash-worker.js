@@ -27,7 +27,8 @@ parentPort.on('message', async ({ taskId, data }) => {
                 message: err instanceof Error
                     ? err.message
                     : 'Worker failed while hashing',
-                name: err instanceof Error ? err.name : 'Error'
+                name: err instanceof Error ? err.name : 'Error',
+                code: err.code
             }
         })
     }

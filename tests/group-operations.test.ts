@@ -98,7 +98,9 @@ describe("findDuplicateGroups", () => {
     it("should handle an empty array", () => {
         expect(findDuplicateGroups([])).toEqual([]);
     })
+})
 
+describe("groupFilesBySize", () => {
     it("should handle deleted files during a scan", async () => {
          const tempDir = await mkdtemp(
             path.join(os.tmpdir(), "dupe-finder-")

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { WorkerPool } from "../src/workers/worker-pool";
+import { WorkerPool, WorkerPoolError } from "../src/workers/worker-pool";
 import path from "node:path";
 import process from "node:process";
 
@@ -109,8 +109,9 @@ describe("WorkerPool", () => {
             }
         }
 
-        await expect(pool.runTask("third"))
-            .rejects.toThrow("Worker pool is shutting down...");
+        const resp = await pool.runTask("third");
+        expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
+        expect(resp).rejects.toThrow("Worker pool is shutting down");
     })
 
     it("should recover when a worker exits unexpectedly with code 0", async () => {
@@ -249,7 +250,9 @@ describe("WorkerPool", () => {
 
             await vi.waitFor(() => expect(pool.size).toBe(0), { timeout: 1500 });
 
-            await expect(pool.runTask("fourth")).rejects.toThrow();
+            const resp = await pool.runTask("fourth");
+            expect(resp).rejects.toThrow();
+            expect(resp).rejects.toBeInstanceOf(WorkerPoolError);
         } finally {
             await pool.shutdown();
         }

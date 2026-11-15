@@ -35,9 +35,9 @@ export class DuplicateScanner {
     async scan(directory: string): Promise<ScanResult> {
         const { allFiles: files, skipped: scanSkipped } = await scanDirectory(directory);
         const { groups, skipped: statSkipped, sizes } = await groupFilesBySize(files);
-        const skipped = [ ...scanSkipped, ...statSkipped];
         const candidateFiles = getCandidateFiles(groups);
-        const candidateHashes = await this.hashService.hashFiles(candidateFiles);
+        const { results: candidateHashes, skipped: hashSkipped } = await this.hashService.hashFiles(candidateFiles);
+        const skipped = [ ...scanSkipped, ...statSkipped, ...hashSkipped];
         const duplicateHashes = findDuplicateGroups(candidateHashes);
         const {
             duplicateFiles,
