@@ -26,3 +26,9 @@ export type DuplicateGroup = {
     hash: string;
     files: string[];
 }
+
+export type ScanOptions = {
+    workers?: number;
+    minSize?: number;
+    exclude?: string[];
+}

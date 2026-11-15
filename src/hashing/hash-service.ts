@@ -1,4 +1,4 @@
-import { SkippedEntry } from "../duplicate-scanner";
+import type { SkippedEntry } from "../types";
 import { WorkerPool, WorkerPoolError } from "../workers/worker-pool";
 
 export type HashTask = {

@@ -17,7 +17,7 @@ describe("DuplicateScanner integration tests", () => {
         const contentB = "same duplicate text B";
         const uniqueContent = "unique file with different size";
 
-        const scanner = new DuplicateScanner(2);
+        const scanner = new DuplicateScanner({ workers: 2 });
 
         try {
             await writeFile(path.join(tempDir, "a.txt"), contentA);
@@ -62,7 +62,7 @@ describe("DuplicateScanner integration tests", () => {
         const tempDir = await mkdtemp(
             path.join(os.tmpdir(), "dupe-finder-")
         );
-        const scanner = new DuplicateScanner(2);
+        const scanner = new DuplicateScanner({ workers: 2 });
 
         try {
             const result = await scanner.scan(tempDir);
@@ -82,7 +82,7 @@ describe("DuplicateScanner integration tests", () => {
         const tempDir = await mkdtemp(
             path.join(os.tmpdir(), "dupe-finder-")
         );
-        const scanner = new DuplicateScanner(2);
+        const scanner = new DuplicateScanner({ workers: 2 });
 
         try {
             await writeFile(path.join(tempDir, "a.txt"), "hello");
@@ -98,6 +98,42 @@ describe("DuplicateScanner integration tests", () => {
         } finally {
             await scanner.shutdown();
             await rm(tempDir, { recursive: true, force: true });
+        }
+    })
+
+    it("skips excluded paths", async () => {
+        const tempDir = await mkdtemp(
+            path.join(os.tmpdir(), "dupe-finder-")
+        );
+
+        const scanner = new DuplicateScanner({ workers: 2, exclude: ["excluded"]});
+        try {
+            const exculdedDir = path.join(tempDir, "excluded");
+            await mkdtemp(exculdedDir);
+
+            const fileA = path.join(tempDir, "a.txt");
+            const fileB = path.join(tempDir, "b.txt");
+            const fileC = path.join(tempDir, "c.txt");
+            const fileD = path.join(tempDir, "d.txt");
+
+            await Promise.all([
+                writeFile(fileA, 'hello'),
+                writeFile(fileB, 'hello'),
+                writeFile(fileC, 'world'),
+                writeFile(fileD, 'world')
+            ]);
+
+            const results = await scanner.scan(tempDir);
+            console.log("results are : ", results);
+            expect(results.summary.totalFilesScanned).toBe(2);
+            expect(results.summary.duplicateFiles).toBe(2);
+            expect(results.duplicates).toEqual([fileA, fileB]);
+        } finally {
+            await scanner.shutdown();
+            await rm(tempDir, {
+                recursive: true,
+                force: true
+            });
         }
     })
 })

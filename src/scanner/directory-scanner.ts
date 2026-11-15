@@ -1,12 +1,13 @@
 import { readdir } from "node:fs/promises"
 import path from "node:path";
-import type { SkippedEntry } from "../duplicate-scanner";
+import type { SkippedEntry } from "../types";
 
-export async function scanDirectory(directory: string): Promise<{ allFiles: string[]; skipped: SkippedEntry[] }> {
+export async function scanDirectory(directory: string, exclude: string[] = []): Promise<{ allFiles: string[]; skipped: SkippedEntry[] }> {
     const allFiles: string[] = [];
     const skipped: SkippedEntry[] = [];
     const root = path.resolve(directory);
     const directories = [root];
+    const excluded = new Set(exclude);
 
     while (directories.length > 0) {
         const currentDirectory = directories.pop()!;
@@ -31,6 +32,7 @@ export async function scanDirectory(directory: string): Promise<{ allFiles: stri
         }
 
         for (const entry of entries) {
+            if (excluded.has(entry.name)) continue;
             const fullPath = path.join(currentDirectory, entry.name);
 
             if (entry.isDirectory()) {

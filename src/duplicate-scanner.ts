@@ -1,18 +1,32 @@
 import { HashService } from "./hashing/hash-service";
 import { scanDirectory } from "./scanner/directory-scanner";
 import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
-import type { DuplicateGroup, ScanResult  } from "./types";
+import type { DuplicateGroup, ScanOptions, ScanResult  } from "./types";
+import os from "node:os"
 
 export class DuplicateScanner {
     private hashService : HashService;
+    private readonly options: Required<ScanOptions>;
 
-    constructor(workerCount: number) {
-        this.hashService = new HashService(workerCount);
+    constructor(options: ScanOptions = {}) {
+        
+        if (options.minSize !== undefined && !(Number.isInteger(options.minSize) && options.minSize >= 0)) {
+            throw new RangeError("Min size must be a non-negative integer");
+        }
+
+        this.options = {
+            workers: Math.max(1, os.availableParallelism() - 1),
+            minSize: 1,
+            exclude: ["node_modules", ".git"],
+            ...options
+        };
+
+        this.hashService = new HashService(this.options.workers);
     }
 
     async scan(directory: string): Promise<ScanResult> {
-        const { allFiles: files, skipped: scanSkipped } = await scanDirectory(directory);
-        const { groups, skipped: statSkipped, sizes } = await groupFilesBySize(files);
+        const { allFiles: files, skipped: scanSkipped } = await scanDirectory(directory, this.options.exclude);
+        const { groups, skipped: statSkipped, sizes } = await groupFilesBySize(files, this.options.minSize);
         const candidateFiles = getCandidateFiles(groups);
         const { results: candidateHashes, skipped: hashSkipped } = await this.hashService.hashFiles(candidateFiles);
         const skipped = [ ...scanSkipped, ...statSkipped, ...hashSkipped];

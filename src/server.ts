@@ -2,7 +2,8 @@ import express, { Request, Response } from "express";
 import os from "node:os";
 import { WorkerPool } from "./workers/worker-pool";
 import { HashService } from "./hashing/hash-service";
-import { DuplicateScanner, ScanResult } from "./duplicate-scanner";
+import { DuplicateScanner } from "./duplicate-scanner";
+import type { ScanResult } from "./types";
 
 const app = express();
 const PORT = 3000;
@@ -19,7 +20,7 @@ type ComputeTask = {
 type ComputeResult = number;
 
 const workerPool = new WorkerPool<ComputeTask, ComputeResult>(WORKER_COUNT, './src/worker.js');
-const duplicateScanner = new DuplicateScanner(WORKER_COUNT);
+const duplicateScanner = new DuplicateScanner({ workers: WORKER_COUNT });
 
 app.use(express.json());
 

@@ -3,7 +3,8 @@ import { HashResult } from "../hashing/hash-service";
 import type { SkippedEntry, DuplicateGroup } from "../types";
 
 export async function groupFilesBySize(
-    files: string[]
+    files: string[],
+    minSize: number = 0
 ): Promise<{groups: Map<number, string[]>; skipped: SkippedEntry[]; sizes: Map<string, number>}> {
     const groups: Map<number, string[]> = new Map();
     const skipped: SkippedEntry[] = [];
@@ -14,6 +15,9 @@ export async function groupFilesBySize(
     for (const [index, result] of results.entries()) {
         if (result.status === 'fulfilled') {
             const size = result.value.size;
+
+            if (size < minSize) continue;
+
             if (groups.has(size)) {
                 groups.get(size)!.push(files[index]);
             } else {
