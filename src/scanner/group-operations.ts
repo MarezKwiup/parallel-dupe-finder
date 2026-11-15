@@ -1,19 +1,36 @@
 import { stat } from "node:fs/promises";
 import { HashResult } from "../hashing/hash-service";
+import { SkippedEntry } from "../duplicate-scanner";
+
 export async function groupFilesBySize(
     files: string[]
-): Promise<Map<number, string[]>> {
-    const group: Map<number, string[]> = new Map();
-    for (const file of files) {
-        const info = await stat(file);
-        const size = info.size;
-        if (group.has(size)) {
-            group.get(size)!.push(file);
+): Promise<{groups: Map<number, string[]>; skipped: SkippedEntry[]; sizes: Map<string, number>}> {
+    const groups: Map<number, string[]> = new Map();
+    const skipped: SkippedEntry[] = [];
+    const sizes: Map<string, number> = new Map();
+    const results = await Promise.allSettled(
+        files.map(file => stat(file))
+    );
+    for (const [index, result] of results.entries()) {
+        if (result.status === 'fulfilled') {
+            const size = result.value.size;
+            if (groups.has(size)) {
+                groups.get(size)!.push(files[index]);
+            } else {
+                groups.set(size, [files[index]]);
+            }
+            sizes.set(files[index], size);
         } else {
-            group.set(size, [file]);
+            const e = result.reason as NodeJS.ErrnoException;
+            skipped.push({
+                path: files[index],
+                stage: 'stat',
+                code: e.code,
+                message: e.message
+            })
         }
     }
-    return group;
+    return { groups, skipped, sizes };
 }
 
 export function getCandidateFiles(

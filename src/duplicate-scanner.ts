@@ -1,7 +1,6 @@
 import { HashService } from "./hashing/hash-service";
 import { scanDirectory } from "./scanner/directory-scanner";
 import { DuplicateGroup, findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
-import fs from 'node:fs/promises';
 
 export type ScanSummary = {
     totalFilesScanned: number;
@@ -34,14 +33,12 @@ export class DuplicateScanner {
     }
 
     async scan(directory: string): Promise<ScanResult> {
-        const { allFiles: files, skipped } = await scanDirectory(directory);
-        const groups = await groupFilesBySize(files);
+        const { allFiles: files, skipped: scanSkipped } = await scanDirectory(directory);
+        const { groups, skipped: statSkipped, sizes } = await groupFilesBySize(files);
+        const skipped = [ ...scanSkipped, ...statSkipped];
         const candidateFiles = getCandidateFiles(groups);
         const candidateHashes = await this.hashService.hashFiles(candidateFiles);
         const duplicateHashes = findDuplicateGroups(candidateHashes);
-        const sizes = await Promise.all(
-            duplicateHashes.map((group) => fs.stat(group.files[0]).then(s => s.size))
-        )
         const {
             duplicateFiles,
             redundantFiles,
@@ -51,7 +48,7 @@ export class DuplicateScanner {
             return {
                 duplicateFiles: acc.duplicateFiles + group.files.length,
                 redundantFiles: acc.redundantFiles + extra,
-                reclaimableBytes: acc.reclaimableBytes + extra * sizes[i]
+                reclaimableBytes: acc.reclaimableBytes + extra * sizes.get(group.files[0])!
             }
         }, {
             duplicateFiles: 0,

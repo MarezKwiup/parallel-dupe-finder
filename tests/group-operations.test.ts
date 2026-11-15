@@ -2,8 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   getCandidateFiles,
   findDuplicateGroups,
+  groupFilesBySize
 } from "../src/scanner/group-operations";
 import { type HashResult } from "../src/hashing/hash-service";
+import { mkdtemp } from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import { writeFile } from "node:fs";
 
 describe("getCandidateFiles", () => {
     it("should return files from groups containing multiple files", () => {
@@ -93,5 +98,27 @@ describe("findDuplicateGroups", () => {
 
     it("should handle an empty array", () => {
         expect(findDuplicateGroups([])).toEqual([]);
+    })
+
+    it("should handle deleted files during a scan", async () => {
+        const tempDir = await mkdtemp(
+            path.join(os.tempDir(), "dupe-finder-")
+        );
+
+        const fileA = path.join(tempDir, "a.txt");
+        const fileB = path.join(tempDir, "b.txt");
+        
+        await writeFile(fileA, "Hello world");
+        await writeFile(fileB, "Hello world");
+
+        const { groups, skipped, sizes } = await groupFilesBySize([fileA, fileB, path.join(tempDir, "deleted.txt")]);
+
+        expect(groups.size).toBe(1);
+        expect(skipped.length).toBe(1);
+        expect(skipped[0]).toMatchObject({
+            path: path.join(tempDir, "deleted.txt"),
+            stage: "stage",
+            code: "ENOENT"
+        });
     })
 })
