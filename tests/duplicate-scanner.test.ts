@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DuplicateScanner } from "../src/duplicate-scanner";
+import { DuplicateScanner } from "../src/duplicate-scanner.js";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -164,7 +164,6 @@ describe("DuplicateScanner integration tests", () => {
                 createdFixedSizeFile(5, fileD, "world"),
             ]);
             const result = await scanner.scan(tempDir);
-            console.log("result is : ", result);
 
             expect(result.summary.totalFilesScanned).toBe(4);
             expect(result.summary.candidateFiles).toBe(2);

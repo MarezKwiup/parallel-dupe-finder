@@ -3,8 +3,8 @@ import {
   getCandidateFiles,
   findDuplicateGroups,
   groupFilesBySize
-} from "../src/scanner/group-operations";
-import { type HashResult } from "../src/hashing/hash-service";
+} from "../src/scanner/group-operations.js";
+import { type HashResult } from "../src/hashing/hash-service.js";
 import path from "node:path";
 import os from "node:os";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";

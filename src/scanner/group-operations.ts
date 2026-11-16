@@ -1,6 +1,6 @@
 import { stat } from "node:fs/promises";
-import { HashResult } from "../hashing/hash-service";
-import type { SkippedEntry, DuplicateGroup } from "../types";
+import { HashResult } from "../hashing/hash-service.js";
+import type { SkippedEntry, DuplicateGroup } from "../types.js";
 
 export async function groupFilesBySize(
     files: string[],

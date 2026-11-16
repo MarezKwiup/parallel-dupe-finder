@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { WorkerPool, WorkerPoolError } from "../src/workers/worker-pool";
+import { WorkerPool, WorkerPoolError } from "../src/workers/worker-pool.js";
 import path from "node:path";
 import process from "node:process";
 

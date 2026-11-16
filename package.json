@@ -1,26 +1,25 @@
 {
   "name": "parallel-dupe-finder",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
   "scripts": {
     "test": "vitest run",
-    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
     "typecheck": "tsc --noEmit"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "MIT",
   "description": "",
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^26.4.1",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.4"
-  },
-  "dependencies": {
-    "express": "^5.2.1"
   }
 }

@@ -1,7 +1,7 @@
-import { HashService } from "./hashing/hash-service";
-import { scanDirectory } from "./scanner/directory-scanner";
-import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations";
-import type { DuplicateGroup, ScanOptions, ScanResult  } from "./types";
+import { HashService } from "./hashing/hash-service.js";
+import { scanDirectory } from "./scanner/directory-scanner.js";
+import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations.js";
+import type { DuplicateGroup, ScanOptions, ScanResult  } from "./types.js";
 import os from "node:os"
 
 export class DuplicateScanner {

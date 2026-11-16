@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises"
 import path from "node:path";
-import type { SkippedEntry } from "../types";
+import type { SkippedEntry } from "../types.js";
 
 export async function scanDirectory(directory: string, exclude: string[] = []): Promise<{ allFiles: string[]; skipped: SkippedEntry[] }> {
     const allFiles: string[] = [];

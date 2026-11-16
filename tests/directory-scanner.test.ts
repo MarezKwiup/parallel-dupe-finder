@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mkdtemp, mkdir, writeFile, chmod, rm } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { scanDirectory } from "../src/scanner/directory-scanner";
+import { scanDirectory } from "../src/scanner/directory-scanner.js";
 
 const permissionUnsupported =
     process.platform === "win32" || process.getuid?.() === 0;

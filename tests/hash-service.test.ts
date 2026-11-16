@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import path from "node:path";
 import os from "node:os";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
-import { HashService } from '../src/hashing/hash-service'; 
-import { WorkerPoolError } from "../src/workers/worker-pool";
+import { HashService } from '../src/hashing/hash-service.js'; 
+import { WorkerPoolError } from "../src/workers/worker-pool.js";
 
 describe("HashService", () => {
     it("hashes files and skips missing/deleted files", async () => {

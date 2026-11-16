@@ -5,7 +5,10 @@
     "moduleResolution": "NodeNext",
     "strict": true,
     "outDir": "./dist",
-    "rootDir": "."
+    "types": ["node"],
+    "rootDir": "./src",
+    "allowJs": true,
+    "declaration": true
   },
   "include": ["src"]
 }

@@ -1,5 +1,5 @@
-import type { SkippedEntry } from "../types";
-import { WorkerPool, WorkerPoolError } from "../workers/worker-pool";
+import type { SkippedEntry } from "../types.js";
+import { WorkerPool, WorkerPoolError } from "../workers/worker-pool.js";
 
 export type HashTask = {
     filePath: string;
@@ -13,7 +13,7 @@ export type HashResult = {
 export class HashService {
     private workerPool : WorkerPool<HashTask, HashResult>;
     constructor(workerCount: number) {
-        this.workerPool = new WorkerPool<HashTask, HashResult>(workerCount, './src/workers/hash-worker.js');
+        this.workerPool = new WorkerPool<HashTask, HashResult>(workerCount, new URL("../workers/hash-worker.js", import.meta.url));
     }
 
     async hashFiles(files: string[]): Promise<{ results: HashResult[]; skipped: SkippedEntry[]}> {
