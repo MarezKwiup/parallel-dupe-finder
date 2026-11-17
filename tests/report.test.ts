@@ -103,10 +103,10 @@ describe("formatReport", () => {
     it("lists each skipped path with its code in verbose mode", () => {
         const report = formatReport(makeResult([bigGroup], skippedEntries), root, true);
 
-        expect(report).toContain(file("locked"));
         expect(report).toContain("EACCES");
-        expect(report).toContain(file("gone.txt"));
         expect(report).toContain("ENOENT");
+        expect(report).toContain("locked");
+        expect(report).toContain("gone.txt");
     });
 
     it("does not mention skipped paths when there are none", () => {

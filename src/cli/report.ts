@@ -26,25 +26,24 @@ export function formatReport(result: ScanResult, directory: string, verbose: boo
 
     const duplicateData = duplicates.map((duplicate, i) => {
         const reclaimable = duplicate.size * (duplicate.files.length - 1);
-        console.log("Size of the file is : ", duplicate.size);
-        const summary = `[${i}] ${formatBytes(duplicate.size)} * ${duplicate.files.length} (${formatBytes(reclaimable)} reclaimable)`;
+        const summary = `[${i + 1}] ${formatBytes(duplicate.size)} * ${duplicate.files.length} (${formatBytes(reclaimable)} reclaimable)`;
         const list = duplicate.files.map((file) => `
             ${path.relative(directory, file)}
         `);
-        return summary + list;
+        return summary + list.join("\n");
     });
 
-    const duplicateString = duplicateSummary + duplicateData;
+    const duplicateString = duplicateSummary + duplicateData.join("\n");
 
     const verboseString = `Skipped paths: ${skipped.map((skippedPath) => `
             PATH: ${path.relative(directory, skippedPath.path)}
             STAGE: ${skippedPath.stage}
             MESSAGE: ${skippedPath.message}
-            ${skippedPath.code && `CODE: ${skippedPath.code}`} 
+            ${skippedPath.code ? `CODE: ${skippedPath.code}`: ''} 
         `)}`;
     const report = `
     Scanned ${(totalFilesScanned).toLocaleString()} files in ${directory}
-    ${duplicatesFound ? duplicateString : noDuplicateString};
+    ${duplicatesFound ? duplicateString : noDuplicateString}
     ${verbose ? `${verboseString}` : `${skippedPaths === 0 ? '' : `⚠ ${skippedPaths} paths could not be read (run with --verbose to list them)`}`}
     `;
     return report;
