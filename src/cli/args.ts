@@ -2,7 +2,6 @@ import { parseArgs } from "node:util";
 import { DEFAULT_EXCLUDE } from "../duplicate-scanner.js";
 import { parseSize } from "./format.js";
 import type { ScanOptions } from "../types.js";
-import { json } from "node:stream/consumers";
 
 export class UsageError extends Error {
     override name = "UsageError";

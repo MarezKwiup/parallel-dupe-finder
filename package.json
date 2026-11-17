@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": { "parallel-dupe-finder": "./dist/cli/index.js" },
   "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
   "files": ["dist"],
   "engines": { "node": ">=20" },
