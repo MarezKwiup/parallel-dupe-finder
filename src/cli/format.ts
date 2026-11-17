@@ -1,42 +1,41 @@
-import { bytes } from "node:stream/consumers";
+const UNITS = ["B", "KB", "MB", "GB"] as const;
+const BASE = 1024;
 
-export const parseSize = (input: string): number => {
-    const regex = /^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i;
-    const match = input.trim().match(regex);
+const MULTIPLIERS: Record<string, number> = {
+    b: 1,
+    kb: BASE,
+    mb: BASE ** 2,
+    gb: BASE ** 3,
+};
+
+export function parseSize(input: string): number {
+    const match = input.trim().match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i);
 
     if (!match) {
-        throw new Error(`Invalid size format: ${input}`);
+        throw new Error(`Invalid size: "${input}"`);
     }
 
     const value = parseFloat(match[1]);
-    const unit = (match[2] || 'b').toLowerCase();
+    const unit = (match[2] ?? "b").toLowerCase();
 
-    const multipliers = {
-        b: 1,
-        kb: 1024,
-        mb: 1024 * 1024,
-        gb: 1024 * 1024 * 1024
-    };
-
-    return Math.floor(value * multipliers[unit as keyof typeof multipliers]);
+    return Math.floor(value * MULTIPLIERS[unit]);
 }
 
-export const formatBytes = (bytes: number): string => {
-    const multipliers = {
-        b: 1,
-        kb: 1024,
-        mb: 1024 * 1024,
-        gb: 1024 * 1024 * 1024
-    };
-    if (bytes > multipliers["gb"]) {
-        const val = parseFloat((bytes / multipliers["gb"]).toFixed(1));
-        return `${val} GB`;
-    } else if (bytes > multipliers["mb"]) {
-        const val = parseFloat((bytes / multipliers["mb"]).toFixed(1));
-        return `${val} MB`;
-    } else if (bytes > multipliers["kb"]) {
-        const val = parseFloat((bytes / multipliers["kb"]).toFixed(1));
-        return `${val} KB`;
+export function formatBytes(bytes: number): string {
+    let value = bytes;
+    let unitIndex = 0;
+
+    while (value >= BASE && unitIndex < UNITS.length - 1) {
+        value /= BASE;
+        unitIndex++;
     }
-    return `${bytes} B`;
+
+    let rounded = Math.round(value * 10) / 10;
+
+    if (rounded >= BASE && unitIndex < UNITS.length - 1) {
+        rounded = Math.round((rounded / BASE) * 10) / 10;
+        unitIndex++;
+    }
+
+    return `${rounded} ${UNITS[unitIndex]}`;
 }

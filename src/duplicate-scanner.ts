@@ -4,6 +4,8 @@ import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scan
 import type { DuplicateGroup, ScanOptions, ScanResult  } from "./types.js";
 import os from "node:os"
 
+export const DEFAULT_EXCLUDE: readonly string[] = ["node_modules", ".git"];
+
 export class DuplicateScanner {
     private hashService : HashService;
     private readonly options: Required<ScanOptions>;
@@ -17,7 +19,7 @@ export class DuplicateScanner {
         this.options = {
             workers: Math.max(1, os.availableParallelism() - 1),
             minSize: 1,
-            exclude: ["node_modules", ".git"],
+            exclude: [...DEFAULT_EXCLUDE],
             ...options
         };
 
