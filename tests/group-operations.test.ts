@@ -59,10 +59,17 @@ describe("findDuplicateGroups", () => {
             }
         ]
 
-        expect(findDuplicateGroups(results)).toEqual([
+        const sizes: Map<string, number> = new Map([
+            ["/files/a.txt", 1],
+            ["/files/b.txt", 1],
+            ["/files/c.txt", 2]
+        ]);
+
+        expect(findDuplicateGroups(results, sizes)).toEqual([
             {
                 hash: "abc123",
-                files: ["/files/a.txt", "/files/b.txt"]
+                files: ["/files/a.txt", "/files/b.txt"],
+                size: 1
             }
         ])
     });
@@ -83,20 +90,30 @@ describe("findDuplicateGroups", () => {
             { filePath: "/files/c.txt", hash: "same" }
         ]
 
-        expect(findDuplicateGroups(results)).toEqual([
+        const sizes: Map<string, number> = new Map([
+            ["/files/a.txt", 1],
+            ["/files/b.txt", 1],
+            ["/files/c.txt", 1]
+        ])
+
+        const result = findDuplicateGroups(results, sizes);
+        expect(result).toEqual([
             {
                 hash: "same",
                 files: [
                     "/files/a.txt",
                     "/files/b.txt",
                     "/files/c.txt"
-                ]
+                ],
+                size: 1
             }
         ]);
     });
 
     it("should handle an empty array", () => {
-        expect(findDuplicateGroups([])).toEqual([]);
+        const sizes: Map<string, number> = new Map();
+        const result = findDuplicateGroups([], sizes);
+        expect(result).toEqual([]);
     })
 })
 

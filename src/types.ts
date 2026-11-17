@@ -25,6 +25,7 @@ export type ScanSummary = {
 export type DuplicateGroup = {
     hash: string;
     files: string[];
+    size: number;
 }
 
 export type ScanOptions = {

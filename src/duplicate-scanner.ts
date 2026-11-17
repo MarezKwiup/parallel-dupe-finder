@@ -1,3 +1,4 @@
+import { group } from "node:console";
 import { HashService } from "./hashing/hash-service.js";
 import { scanDirectory } from "./scanner/directory-scanner.js";
 import { findDuplicateGroups, getCandidateFiles, groupFilesBySize } from "./scanner/group-operations.js";
@@ -32,17 +33,17 @@ export class DuplicateScanner {
         const candidateFiles = getCandidateFiles(groups);
         const { results: candidateHashes, skipped: hashSkipped } = await this.hashService.hashFiles(candidateFiles);
         const skipped = [ ...scanSkipped, ...statSkipped, ...hashSkipped];
-        const duplicateHashes = findDuplicateGroups(candidateHashes);
+        const duplicateGroups = findDuplicateGroups(candidateHashes, sizes);
         const {
             duplicateFiles,
             redundantFiles,
             reclaimableBytes
-        } = duplicateHashes.reduce((acc, group) => {
+        } = duplicateGroups.reduce((acc, group) => {
             const extra = group.files.length - 1;
             return {
                 duplicateFiles: acc.duplicateFiles + group.files.length,
                 redundantFiles: acc.redundantFiles + extra,
-                reclaimableBytes: acc.reclaimableBytes + extra * sizes.get(group.files[0])!
+                reclaimableBytes: acc.reclaimableBytes + extra * group.size
             }
         }, {
             duplicateFiles: 0,
@@ -54,13 +55,13 @@ export class DuplicateScanner {
             summary: {
                 totalFilesScanned: files.length,
                 candidateFiles: candidateFiles.length,
-                duplicateGroups: duplicateHashes.length,
+                duplicateGroups: duplicateGroups.length,
                 duplicateFiles,
                 redundantFiles,
                 reclaimableBytes,
                 skippedPaths: skipped.length
             },
-            duplicates: duplicateHashes,
+            duplicates: duplicateGroups,
             skipped: skipped
         }
         return result;

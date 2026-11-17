@@ -50,7 +50,8 @@ export function getCandidateFiles(
 }
 
 export function findDuplicateGroups(
-    results: HashResult[]
+    results: HashResult[],
+    sizes: Map<string, number>
 ): DuplicateGroup[] {
     const hashMap: Map<string, string[]> = new Map();
     for (let i = 0; i < results.length; i++) {
@@ -62,7 +63,7 @@ export function findDuplicateGroups(
     const duplicateGroups: DuplicateGroup[] = [];
     for (const [hash, files] of hashMap) {
         if (files.length > 1) {
-            duplicateGroups.push({ hash, files});
+            duplicateGroups.push({ hash, files, size: sizes.get(files[0])! });
         }
     }
     return duplicateGroups;
