@@ -3,14 +3,27 @@
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": { "parallel-dupe-finder": "./dist/cli/index.js" },
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
-  "files": ["dist"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "parallel-dupe-finder": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "vitest run",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bench:data": "tsx benchmark/generate-dataset.ts",
+    "bench": "tsx benchmark/run.ts"
   },
   "type": "module",
   "keywords": [],
@@ -18,7 +31,7 @@
   "license": "MIT",
   "description": "",
   "devDependencies": {
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.6",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
     "vitest": "^5.0.4"
