@@ -1,5 +1,6 @@
 # parallel-dupe-finder
 [![CI](https://github.com/MarezKwiup/parallel-dupe-finder/actions/workflows/ci.yml/badge.svg)](https://github.com/MarezKwiup/parallel-dupe-finder/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/parallel-dupe-finder)](https://www.npmjs.com/package/parallel-dupe-finder)
 Find duplicate files fast. `parallel-dupe-finder` scans a folder, narrows the candidates down by file size, and hashes the remaining files in parallel on a pool of worker threads.
 
 ```
