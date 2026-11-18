@@ -21,7 +21,7 @@
   "scripts": {
     "test": "vitest run",
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p benchmark",
     "bench:data": "tsx benchmark/generate-dataset.ts",
     "bench": "tsx benchmark/run.ts"
   },
