@@ -1,6 +1,6 @@
 {
   "name": "parallel-dupe-finder",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -23,13 +23,20 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit && tsc -p benchmark",
     "bench:data": "tsx benchmark/generate-dataset.ts",
-    "bench": "tsx benchmark/run.ts"
+    "bench": "tsx benchmark/run.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "type": "module",
-  "keywords": [],
-  "author": "",
+  "keywords": ["duplicate", "duplicates", "dedupe", "files", "cli", "worker-threads", "hash"],
+  "author": "Vardan Sharma",
   "license": "MIT",
-  "description": "",
+  "description": "Find duplicate files fast, hashing in parallel on a pool of worker threads",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarezKwiup/parallel-dupe-finder.git"
+  },
+  "homepage": "https://github.com/MarezKwiup/parallel-dupe-finder#readme",
+  "bugs": "https://github.com/MarezKwiup/parallel-dupe-finder/issues",
   "devDependencies": {
     "@types/node": "^26.6.6",
     "tsx": "^4.23.13",
