@@ -110,7 +110,7 @@ async function main() {
     console.log(`CPU: ${cpus[0].model ?? "unknown"} (${cpus.length} cores)`);
     console.log(`Node: ${process.version}`);
     console.log(`OS: ${os.type()} ${os.release()}`);
-    console.log(`Dataset: ${files.length} files hashed, ${(totalBytes / 1024 ** 3)} GB, seed ${manifest.seed}`);
+    console.log(`Dataset: ${files.length} files hashed, ${(totalBytes / 1024 ** 3).toFixed(2)} GB, seed ${manifest.seed}`);
     console.log(`Runs: ${runs} per strategy (median reported), after 1 warm-up pass\n`);
 
     // Warm up
@@ -149,7 +149,7 @@ async function main() {
     const baseline = rows[0].ms;
 
     console.log("| Strategy | Median time | Speedup | Throughput |");
-    console.log("|---|---;|---;|---;|");
+    console.log("|---|---:|---:|---:|");
     for (const { name, ms} of rows) {
         const seconds = ms / 1000;
         const throughput = totalBytes / (1024 ** 2) / seconds;
